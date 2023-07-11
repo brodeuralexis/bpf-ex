@@ -1,4 +1,4 @@
-defmodule Bpf.Link do
+defmodule BPF.Link do
   @moduledoc """
   """
 

@@ -33,3 +33,16 @@ defmodule BPF.LoadError do
     %__MODULE__{message: message, errno: errno, log: log}
   end
 end
+
+defmodule BPF.AttachError do
+  defexception [:message, :errno]
+
+  @impl true
+  def exception(errno: errno) do
+    message =
+      "failed to attach BPF program, libbpf returned an #{errno} error " <>
+        "code."
+
+    %__MODULE__{message: message, errno: errno}
+  end
+end

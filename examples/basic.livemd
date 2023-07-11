@@ -17,17 +17,21 @@ BPF.Object.load!(object)
 ```
 
 ```elixir
-[_, map] = object.maps
+[do_sys_enter] = object.programs
+do_sys_enter
 ```
 
 ```elixir
-BPF.Map.lookup_elem!(map, 0)
+[syscall_counts] = object.maps
+syscall_counts
 ```
 
 ```elixir
-BPF.Map.update_elem!(map, 0, %{"t1" => 0x4200420042004200, "t2" => 123.456})
+link = BPF.Program.attach!(do_sys_enter)
 ```
 
 ```elixir
-BPF.Map.lookup_elem!(map, 0)
+for i <- 0..256 do
+  BPF.Map.lookup_elem!(syscall_counts, i)
+end
 ```
