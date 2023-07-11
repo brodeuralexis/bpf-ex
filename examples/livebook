@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+
+set -ex
+
+SCRIPT=$(realpath "$0")
+SCRIPTDIR=$(dirname "$SCRIPT")
+
+export LIVEBOOK_HOME="$SCRIPTDIR"
+export LIVEBOOK_TOKEN_ENABLED=false
+
+cd "$SCRIPTDIR" && livebook server
