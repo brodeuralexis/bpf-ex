@@ -20,7 +20,6 @@ defmodule :bpf_sys do
   def map_btf_key_type_id(_), do: nif_error()
   def map_btf_value_type_id(_), do: nif_error()
 
-  def object_open(_), do: nif_error()
   def object_open_file(_, _), do: nif_error()
   def object_load(_), do: nif_error()
   def object_pin_maps(_, _), do: nif_error()

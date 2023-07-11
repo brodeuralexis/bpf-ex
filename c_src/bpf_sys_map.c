@@ -87,9 +87,6 @@ NIF(map_update_elem_nif)
     size_t key_size = bpf_map__key_size(map->handle);
     size_t value_size = bpf_map__value_size(map->handle);
 
-    EBPF_DEBUG("key_size: %d, key_bin.size: %d", key_size, key_bin.size);
-    EBPF_DEBUG("value_size: %d, value_bin.size: %d", value_size, value_bin.size);
-
     if (key_bin.size != key_size) {
         return bpf_sys_make_error(env, enif_make_atom(env, "einval"));
     }

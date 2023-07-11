@@ -20,13 +20,14 @@ typedef struct bpf_sys_object {
     size_t num_maps;
     size_t num_programs;
     bpf_sys_btf_t* btf;
+    char* log_buffer;
+    size_t log_size;
 } bpf_sys_object_t;
 
 int bpf_sys_object_load(ErlNifEnv* env, void** priv, ERL_NIF_TERM info_term);
 
 #define BPF_SYS_OBJECT_FUNCS                                          \
-    { "object_open", 1, object_open_nif, 0 },                         \
-        { "object_open_file", 2, object_open_file_nif, 0 },           \
+    { "object_open_file", 2, object_open_file_nif, 0 },               \
         { "object_load", 1, object_load_nif, 0 },                     \
         { "object_pin_maps", 2, object_pin_maps_nif, 0 },             \
         { "object_unpin_maps", 2, object_unpin_maps_nif, 0 },         \
@@ -39,7 +40,6 @@ int bpf_sys_object_load(ErlNifEnv* env, void** priv, ERL_NIF_TERM info_term);
         { "object_maps", 1, object_maps_nif, 0 },                     \
         { "object_programs", 1, object_programs_nif, 0 },
 
-NIF(object_open_nif);
 NIF(object_open_file_nif);
 NIF(object_load_nif);
 NIF(object_pin_maps_nif);

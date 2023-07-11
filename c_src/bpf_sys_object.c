@@ -5,6 +5,8 @@
 #include "bpf_sys_map.h"
 #include "bpf_sys_program.h"
 
+#define DEFAULT_LOG_BUFFER_SIZE (64 * 1024) // Same as Cilium's
+
 ErlNifResourceType* BPF_SYS_OBJECT_TYPE;
 
 static ERL_NIF_TERM ATOM_OBJECT_NAME;
@@ -32,9 +34,9 @@ static void ebpf_object_dtor(ErlNifEnv* env, void* resource)
         enif_release_resource(object->btf);
     }
 
-    bpf_object__close(object->handle);
+    enif_free(object->log_buffer);
 
-    EBPF_DEBUG0("done: ebpf_object_dtor");
+    bpf_object__close(object->handle);
 }
 
 int bpf_sys_object_load(ErlNifEnv* env, void** priv, ERL_NIF_TERM info_term)
@@ -50,7 +52,7 @@ int bpf_sys_object_load(ErlNifEnv* env, void** priv, ERL_NIF_TERM info_term)
     return 0;
 }
 
-static ERL_NIF_TERM do_open(ErlNifEnv* env, struct bpf_object* handle)
+static ERL_NIF_TERM do_open(ErlNifEnv* env, struct bpf_object* handle, char* kernel_log_buf)
 {
     bpf_sys_object_t* object = enif_alloc_resource(BPF_SYS_OBJECT_TYPE, sizeof(*object));
     object->handle = handle;
@@ -100,31 +102,12 @@ static ERL_NIF_TERM do_open(ErlNifEnv* env, struct bpf_object* handle)
         btf->owned = false;
     }
 
+    object->log_buffer = kernel_log_buf;
+    object->log_size = DEFAULT_LOG_BUFFER_SIZE;
+
     ERL_NIF_TERM object_term = enif_make_resource(env, object);
     enif_release_resource(object);
     return bpf_sys_make_ok(env, object_term);
-}
-
-NIF(object_open_nif)
-{
-    ERL_NIF_TERM result;
-
-    const char* path = NULL;
-    if (!bpf_sys_get_string(env, argv[0], &path)) {
-        return enif_make_badarg(env);
-    }
-
-    struct bpf_object* handle = bpf_object__open(path);
-    if (handle == NULL) {
-        result = errno_to_result(env);
-        goto cleanup_path;
-    }
-
-    result = do_open(env, handle);
-
-cleanup_path:
-    enif_free((void*)path);
-    return result;
 }
 
 NIF(object_open_file_nif)
@@ -222,13 +205,17 @@ NIF(object_open_file_nif)
         }
     }
 
+    opts.kernel_log_buf = enif_alloc(sizeof(*opts.kernel_log_buf) * DEFAULT_LOG_BUFFER_SIZE);
+    opts.kernel_log_size = DEFAULT_LOG_BUFFER_SIZE;
+    opts.kernel_log_level = 1;
+
     struct bpf_object* handle = bpf_object__open_file(path, &opts);
     if (!handle) {
         result = errno_to_result(env);
         goto cleanup_opts;
     }
 
-    result = do_open(env, handle);
+    result = do_open(env, handle, opts.kernel_log_buf);
 
 cleanup_opts:
     if (opts.object_name) {
@@ -259,7 +246,7 @@ NIF(object_load_nif)
     }
 
     if (bpf_object__load(object->handle) < 0) {
-        return errno_to_result(env);
+        return bpf_sys_make_error(env, enif_make_tuple2(env, errno_to_atom(env), bpf_sys_make_string(env, object->log_buffer)));
     }
 
     return ATOM_OK;

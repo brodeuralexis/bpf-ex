@@ -1,5 +1,3 @@
-<!-- livebook:{"persist_outputs":true} -->
-
 # Basic
 
 ```elixir
@@ -8,111 +6,18 @@ Mix.install([
 ])
 ```
 
-<!-- livebook:{"output":true} -->
-
-```
-==> bpf
-cc -Wall -O3 -fPIC -pthread -std=c11 -I/home/chaton/.asdf/installs/erlang/25.3.2/erts-13.2.2/include  -MMD -c -o c_src/bpf_sys_map.o c_src/bpf_sys_map.c
-In file included from c_src/bpf_sys_map.h:7,
-                 from c_src/bpf_sys_map.c:1:
-c_src/bpf_sys_map.c: In function ‘map_update_elem_nif’:
-c_src/bpf_sys.h:13:21: warning: format ‘%d’ expects argument of type ‘int’, but argument 5 has type ‘size_t’ {aka ‘long unsigned int’} [-Wformat=]
-   13 |     fprintf(stderr, "[%s:%d] " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
-      |                     ^~~~~~~~~~
-c_src/bpf_sys_map.c:90:5: note: in expansion of macro ‘EBPF_DEBUG’
-   90 |     EBPF_DEBUG("key_size: %d, key_bin.size: %d", key_size, key_bin.size);
-      |     ^~~~~~~~~~
-c_src/bpf_sys.h:13:21: warning: format ‘%d’ expects argument of type ‘int’, but argument 6 has type ‘size_t’ {aka ‘long unsigned int’} [-Wformat=]
-   13 |     fprintf(stderr, "[%s:%d] " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
-      |                     ^~~~~~~~~~
-c_src/bpf_sys_map.c:90:5: note: in expansion of macro ‘EBPF_DEBUG’
-   90 |     EBPF_DEBUG("key_size: %d, key_bin.size: %d", key_size, key_bin.size);
-      |     ^~~~~~~~~~
-c_src/bpf_sys.h:13:21: warning: format ‘%d’ expects argument of type ‘int’, but argument 5 has type ‘size_t’ {aka ‘long unsigned int’} [-Wformat=]
-   13 |     fprintf(stderr, "[%s:%d] " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
-      |                     ^~~~~~~~~~
-c_src/bpf_sys_map.c:91:5: note: in expansion of macro ‘EBPF_DEBUG’
-   91 |     EBPF_DEBUG("value_size: %d, value_bin.size: %d", value_size, value_bin.size);
-      |     ^~~~~~~~~~
-c_src/bpf_sys.h:13:21: warning: format ‘%d’ expects argument of type ‘int’, but argument 6 has type ‘size_t’ {aka ‘long unsigned int’} [-Wformat=]
-   13 |     fprintf(stderr, "[%s:%d] " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
-      |                     ^~~~~~~~~~
-c_src/bpf_sys_map.c:91:5: note: in expansion of macro ‘EBPF_DEBUG’
-   91 |     EBPF_DEBUG("value_size: %d, value_bin.size: %d", value_size, value_bin.size);
-      |     ^~~~~~~~~~
-cc -shared -o priv/bpf_sys.so c_src/bpf_sys_btf.o c_src/bpf_sys.o c_src/bpf_sys_enum.o c_src/bpf_sys_error.o c_src/bpf_sys_link.o c_src/bpf_sys_map.o c_src/bpf_sys_object.o c_src/bpf_sys_program.o -lbpf 
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-:ok
-```
-
 ## Opening & Loading
 
 ```elixir
 object = BPF.Object.open_file!("syscall_counter.o")
 ```
 
-<!-- livebook:{"output":true} -->
-
-```
-%BPF.Object{
-  name: "syscall_counter",
-  maps: [
-    %BPF.Map{
-      name: "syscall_counts",
-      btf: %BTF{endianness: :little, ref: #Reference<0.1063839487.3581542407.121522>},
-      ref: #Reference<0.1063839487.3581542407.121519>
-    },
-    %BPF.Map{
-      name: "meta_map",
-      btf: %BTF{endianness: :little, ref: #Reference<0.1063839487.3581542407.121522>},
-      ref: #Reference<0.1063839487.3581542407.121520>
-    }
-  ],
-  programs: [
-    %BPF.Program{
-      name: "do_sys_enter",
-      section_name: "tracepoint/raw_syscalls/sys_enter",
-      ref: #Reference<0.1063839487.3581542407.121521>
-    }
-  ],
-  btf: %BTF{endianness: :little, ref: #Reference<0.1063839487.3581542407.121522>},
-  ref: #Reference<0.1063839487.3581542407.121518>
-}
-```
-
 ```elixir
 BPF.Object.load!(object)
 ```
 
-<!-- livebook:{"output":true} -->
-
-```
-:ok
-```
-
 ```elixir
 [_, map] = object.maps
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-[
-  %BPF.Map{
-    name: "syscall_counts",
-    btf: %BTF{endianness: :little, ref: #Reference<0.1063839487.3581542407.121522>},
-    ref: #Reference<0.1063839487.3581542407.121519>
-  },
-  %BPF.Map{
-    name: "meta_map",
-    btf: %BTF{endianness: :little, ref: #Reference<0.1063839487.3581542407.121522>},
-    ref: #Reference<0.1063839487.3581542407.121520>
-  }
-]
 ```
 
 ```elixir
@@ -123,18 +28,6 @@ BPF.Map.lookup_elem!(map, 0)
 BPF.Map.update_elem!(map, 0, %{"t1" => 0x4200420042004200, "t2" => 123.456})
 ```
 
-<!-- livebook:{"output":true} -->
-
-```
-:ok
-```
-
 ```elixir
 BPF.Map.lookup_elem!(map, 0)
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-%{"t1" => 4755873775377990144, "t2" => 123.456}
 ```

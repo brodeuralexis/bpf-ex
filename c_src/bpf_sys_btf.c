@@ -239,8 +239,6 @@ static ERL_NIF_TERM encode_decl_tag(ErlNifEnv* env, const struct btf_type* type,
 
 static ERL_NIF_TERM encode_type_tag(ErlNifEnv* env, const struct btf_type* type, ERL_NIF_TERM map)
 {
-    EBPF_DEBUG0("type tag");
-
     enif_make_map_put(env, map, enif_make_atom(env, "size"), enif_make_uint(env, type->size), &map);
     return bpf_sys_make_ok(env, map);
 }

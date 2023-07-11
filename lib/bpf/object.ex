@@ -75,12 +75,7 @@ defmodule BPF.Object do
        }}
     else
       {:error, errno} ->
-        {:error,
-         %BPF.Error{
-           message: """
-           failed to open program at #{inspect(path)}: #{errno}.
-           """
-         }}
+        {:error, BPF.OpenError.exception(errno: errno, path: path)}
     end
   end
 
@@ -142,13 +137,8 @@ defmodule BPF.Object do
       :ok ->
         :ok
 
-      {:error, errno} ->
-        {:error,
-         %BPF.Error{
-           message: """
-           Failed to load object into the kernel: #{errno}.
-           """
-         }}
+      {:error, {errno, log}} ->
+        {:error, BPF.LoadError.exception(errno: errno, log: log)}
     end
   end
 
