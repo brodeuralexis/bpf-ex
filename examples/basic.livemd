@@ -17,21 +17,11 @@ BPF.Object.load!(object)
 ```
 
 ```elixir
-[do_sys_enter] = object.programs
-do_sys_enter
-```
-
-```elixir
-[syscall_counts] = object.maps
-syscall_counts
-```
-
-```elixir
-link = BPF.Program.attach!(do_sys_enter)
+link = BPF.Program.attach!(object.programs["do_sys_exit"])
 ```
 
 ```elixir
 for i <- 0..256 do
-  BPF.Map.lookup_elem!(syscall_counts, i)
+  BPF.Map.lookup_elem!(object.maps["syscall_counts"], i)
 end
 ```

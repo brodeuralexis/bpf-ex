@@ -14,7 +14,7 @@ struct {
 } syscall_counts SEC(".maps");
 
 SEC("tracepoint/raw_syscalls/sys_exit")
-int do_sys_enter(struct syscall_trace_exit* ctx)
+int do_sys_exit(struct syscall_trace_exit* ctx)
 {
     uint32_t key = ctx->nr;
     syscall_counts_t* counts = bpf_map_lookup_elem((void*)&syscall_counts, &key);

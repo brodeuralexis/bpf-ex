@@ -7,8 +7,8 @@ defmodule BPF.Object do
 
   @type t :: %__MODULE__{
           name: String.t(),
-          maps: [BPF.Map.t()],
-          programs: [BPF.Program.t()],
+          maps: %{String.t() => BPF.Map.t()},
+          programs: %{String.t() => BPF.Program.t()},
           btf: BPF.BTF.t(),
           ref: reference()
         }
@@ -105,27 +105,30 @@ defmodule BPF.Object do
   end
 
   defp open_maps(ref, btf) do
-    ref
-    |> :bpf_sys.object_maps()
-    |> Enum.map(fn ref ->
-      %BPF.Map{
-        name: :bpf_sys.map_name(ref),
-        btf: btf,
-        ref: ref
-      }
-    end)
+    for ref <- :bpf_sys.object_maps(ref), into: %{} do
+      name = :bpf_sys.map_name(ref)
+
+      {name,
+       %BPF.Map{
+         name: name,
+         btf: btf,
+         ref: ref
+       }}
+    end
   end
 
   defp open_programs(ref) do
-    ref
-    |> :bpf_sys.object_programs()
-    |> Enum.map(fn ref ->
-      %BPF.Program{
-        name: :bpf_sys.program_name(ref),
-        section_name: :bpf_sys.program_section_name(ref),
-        ref: ref
-      }
-    end)
+    for ref <- :bpf_sys.object_programs(ref), into: %{} do
+      name = :bpf_sys.program_name(ref)
+      section_name = :bpf_sys.program_section_name(ref)
+
+      {name,
+       %BPF.Program{
+         name: name,
+         section_name: section_name,
+         ref: ref
+       }}
+    end
   end
 
   @doc """
