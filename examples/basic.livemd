@@ -1,3 +1,5 @@
+<!-- livebook:{"persist_outputs":true} -->
+
 # Basic
 
 ```elixir
@@ -6,22 +8,126 @@ Mix.install([
 ])
 ```
 
+<!-- livebook:{"output":true} -->
+
+```
+==> bpf
+make: 'priv/bpf_sys.so' is up to date.
+Compiling 1 file (.ex)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+## What is BPF
+
+BPF (Berkeley Packet Filter) is a technology for the Linux kernel that has existed for many in years in order for tools like *WireShark* or *tcpdump* to filter network traffic.
+
+In recent years, BPF has seen a surge in popularity to do the introduction of an extended feature set, enabling users to do a lot more than simple packet filtering. Modern BPF is a fully fledged bytecode for modern CPU architectures enabling generation of fast and efficient machine code.
+
+BPF programs are written in a low-level programming language like C or Rust, and are compiled to BPF bytecode.  There are many approaches to compiling and using BPF programs, but the Linux development community has created and maintains *libbpf* for such a purpose.
+
+Writting BPF programs is out-of-scope for this document.  One may however refer to the [syscall counter](https://github.com/brodeuralexis/bpf-ex/blob/master/examples/syscall_counter.c) for an example program used in this notebook.
+
 ## Opening & Loading
+
+`BPF` enables working with BPF objects, programs, maps, etc. in an easy and intuitive manner. In this section, we will present how opening and loading BPF programs work with `BPF`.
+
+A compiled BPF program is distributed in object for, which consists of an ELF file with sections for the programs, the maps, relocation, debug information, etc.  Using `BPF.Object.open_file/1`, we can open this file and see what is inside of it:
 
 ```elixir
 object = BPF.Object.open_file!("syscall_counter.o")
 ```
 
+<!-- livebook:{"output":true} -->
+
+```
+%BPF.Object{
+  name: "syscall_counter",
+  maps: %{
+    "syscall_counts" => %BPF.Map{
+      name: "syscall_counts",
+      btf: %BTF{endianness: :little, ref: #Reference<0.2796128566.1727660036.240150>},
+      ref: #Reference<0.2796128566.1727660036.240148>
+    }
+  },
+  programs: %{
+    "do_sys_exit" => %BPF.Program{
+      name: "do_sys_exit",
+      section_name: "tracepoint/raw_syscalls/sys_exit",
+      ref: #Reference<0.2796128566.1727660036.240149>
+    }
+  },
+  btf: %BTF{endianness: :little, ref: #Reference<0.2796128566.1727660036.240150>},
+  ref: #Reference<0.2796128566.1727660036.240147>
+}
+```
+
+An opened BPF object file means that its programs are copied into userspace memory, and its maps are created.  After the program is opened, one may start to read and write to the maps, or change configuration options.
+
+We have no need to change anything, so we load the program into kernel memory:
+
 ```elixir
 BPF.Object.load!(object)
 ```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+A loaded BPF object signifies that all of its programs have been copied into kernel memory.  We are now able to link program to attach points in the Linux kernel.
+
+## Attaching
+
+An attach point can be thought of as an event generator, and the program itself as an event listener.  The Linux kernel offers multiple attach points allowing us to do a multitude of things like filtering packets, observing system calls, dissecting network flow, etc.
+
+Here, we attach the `do_sys_exit` program which will count the number of successful and unsuccessful system calls for every system calls on the host system:
 
 ```elixir
 link = BPF.Program.attach!(object.programs["do_sys_exit"])
 ```
 
-```elixir
-for i <- 0..256 do
-  BPF.Map.lookup_elem!(object.maps["syscall_counts"], i)
-end
+<!-- livebook:{"output":true} -->
+
 ```
+%BPF.Link{ref: #Reference<0.2796128566.1727660036.240161>}
+```
+
+When attaching a program, a `BPF.Link` is returning.  A `BPF.Link` represents the link between an attach point and a program. Some types of links even allow atomic replacement of programs.
+
+## Maps
+
+In BPF, a map acts like a dictionary of key mapping to values.  While it is possible to create maps that are not part of objects, `BPF` does not support such a feature.
+
+There are 3 basic operations to maps consisting of `lookup_elem`, `update_elem`, `delete_elem`. `BPF` supports all 3 operations, but here, we will only look at `lookup`:
+
+```elixir
+[
+  read: BPF.Map.lookup_elem!(object.maps["syscall_counts"], 0),
+  write: BPF.Map.lookup_elem!(object.maps["syscall_counts"], 1),
+  openat: BPF.Map.lookup_elem!(object.maps["syscall_counts"], 257),
+  close: BPF.Map.lookup_elem!(object.maps["syscall_counts"], 3)
+]
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+[
+  read: %{"failure_counts" => 45834, "success_counts" => 213318},
+  write: %{"failure_counts" => 2, "success_counts" => 178825},
+  openat: %{"failure_counts" => 5377, "success_counts" => 20731},
+  close: %{"failure_counts" => 0, "success_counts" => 26228}
+]
+```
+
+Normally, when dealing with BPF maps, keys and values must be provided as binary data following the C ABI.
+
+In line with `BPF`'s goal of ensuring ease of use, all BPF objects that provide BTF (BPF Type Format) information will see their maps' keys and values automatically encoded and decoded depending on the context.
+
+In the above example, we can see that the keys, like `257`, are automatically encoded as to their binary form, which would be `<<257::little-unsigned-integer-size(64)-unit(1)>>`.  The values, which are actually C structs, are correctly parsed with fields corresponding to map members with the write name.
