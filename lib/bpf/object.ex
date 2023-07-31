@@ -75,7 +75,7 @@ defmodule BPF.Object do
        }}
     else
       {:error, errno} ->
-        {:error, BPF.OpenError.exception(errno: errno, path: path)}
+        {:error, BPF.Error.exception(op: :object_open, errno: errno, path: path)}
     end
   end
 
@@ -141,7 +141,7 @@ defmodule BPF.Object do
         :ok
 
       {:error, {errno, log}} ->
-        {:error, BPF.LoadError.exception(errno: errno, log: log)}
+        {:error, BPF.Error.exception(op: :object_load, errno: errno, log: log)}
     end
   end
 

@@ -18,7 +18,7 @@ defmodule BPF.Program do
         {:ok, %BPF.Link{ref: ref}}
 
       {:error, errno} ->
-        {:error, BPF.AttachError.exception(errno: errno)}
+        {:error, BPF.Error.exception(op: :program_attach, errno: errno)}
     end
   end
 

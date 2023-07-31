@@ -21,12 +21,7 @@ defmodule BPF.Map do
         {:ok, value}
 
       {:error, errno} ->
-        {:error,
-         %BPF.Error{
-           message: """
-           Failed to lookup map element: #{errno}.
-           """
-         }}
+        {:error, BPF.Error.exception(op: :map_lookup_elem, errno: errno)}
     end
   end
 
@@ -64,12 +59,7 @@ defmodule BPF.Map do
         :ok
 
       {:error, errno} ->
-        {:error,
-         %BPF.Error{
-           message: """
-           Failed to update map element: #{errno}.
-           """
-         }}
+        {:error, BPF.Error.exception(op: :map_update_elem, errno: errno)}
     end
   end
 
