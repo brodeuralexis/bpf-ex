@@ -45,25 +45,18 @@ object = BPF.Object.open_file!("syscall_counter.o")
 <!-- livebook:{"output":true} -->
 
 ```
-%BPF.Object{
+#BPF.Object<
   name: "syscall_counter",
-  maps: %{
-    "syscall_counts" => %BPF.Map{
-      name: "syscall_counts",
-      btf: %BTF{endianness: :little, ref: #Reference<0.2796128566.1727660036.240150>},
-      ref: #Reference<0.2796128566.1727660036.240148>
-    }
-  },
+  maps: %{"syscall_counts" => #BPF.Map<name: "syscall_counts", ...>},
   programs: %{
-    "do_sys_exit" => %BPF.Program{
+    "do_sys_exit" => #BPF.Program<
       name: "do_sys_exit",
       section_name: "tracepoint/raw_syscalls/sys_exit",
-      ref: #Reference<0.2796128566.1727660036.240149>
-    }
+      ...
+    >
   },
-  btf: %BTF{endianness: :little, ref: #Reference<0.2796128566.1727660036.240150>},
-  ref: #Reference<0.2796128566.1727660036.240147>
-}
+  ...
+>
 ```
 
 An opened BPF object file means that its programs are copied into userspace memory, and its maps are created.  After the program is opened, one may start to read and write to the maps, or change configuration options.
@@ -95,7 +88,7 @@ link = BPF.Program.attach!(object.programs["do_sys_exit"])
 <!-- livebook:{"output":true} -->
 
 ```
-%BPF.Link{ref: #Reference<0.2796128566.1727660036.240161>}
+#BPF.Link<...>
 ```
 
 When attaching a program, a `BPF.Link` is returning.  A `BPF.Link` represents the link between an attach point and a program. Some types of links even allow atomic replacement of programs.
@@ -119,10 +112,10 @@ There are 3 basic operations to maps consisting of `lookup_elem`, `update_elem`,
 
 ```
 [
-  read: %{"failure_counts" => 45834, "success_counts" => 213318},
-  write: %{"failure_counts" => 2, "success_counts" => 178825},
-  openat: %{"failure_counts" => 5377, "success_counts" => 20731},
-  close: %{"failure_counts" => 0, "success_counts" => 26228}
+  read: %{"failure_counts" => 9975, "success_counts" => 50487},
+  write: %{"failure_counts" => 0, "success_counts" => 52464},
+  openat: %{"failure_counts" => 2492, "success_counts" => 4208},
+  close: %{"failure_counts" => 0, "success_counts" => 4830}
 ]
 ```
 
