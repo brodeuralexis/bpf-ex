@@ -37,9 +37,22 @@ defmodule BPF.Map do
     with {:ok, key_type} <- BTF.find_by_id(btf, key_type_id),
          {:ok, value_type} <- BTF.find_by_id(btf, value_type_id),
          {:ok, key} <- BTF.encode(btf, key_type, key),
-         {:ok, value} <- lookup_elem(map, key),
-         {:ok, value} <- BTF.decode(btf, value_type, value) do
-      {:ok, value}
+         {:ok, value} <- lookup_elem(map, key) do
+      case value do
+        values when is_list(values) ->
+          values
+          |> Stream.map(&BTF.decode(btf, value_type, &1))
+          |> Enum.reduce_while({:ok, []}, fn
+            {:ok, value}, {:ok, acc} ->
+              {:cont, {:ok, [value | acc]}}
+
+            {:error, reason}, {:ok, _acc} ->
+              {:halt, {:error, reason}}
+          end)
+
+        value when is_binary(value) ->
+          BTF.decode(btf, value_type, value)
+      end
     end
   end
 

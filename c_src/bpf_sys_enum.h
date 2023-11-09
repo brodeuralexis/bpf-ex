@@ -12,6 +12,8 @@ ERL_NIF_TERM bpf_sys_map_type_to_atom(ErlNifEnv* env, enum bpf_map_type type);
 
 bool bpf_sys_atom_to_map_type(ErlNifEnv* env, ERL_NIF_TERM term, enum bpf_map_type* type);
 
+bool bpf_sys_map_is_per_cpu(enum bpf_map_type type);
+
 ERL_NIF_TERM bpf_sys_link_type_to_atom(ErlNifEnv* env, enum bpf_link_type type);
 
 bool bpf_sys_atom_to_link_type(ErlNifEnv* env, ERL_NIF_TERM term, enum bpf_link_type* type);

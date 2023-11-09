@@ -77,6 +77,19 @@ bool bpf_sys_atom_to_map_type(ErlNifEnv* env, ERL_NIF_TERM term, enum bpf_map_ty
     return false;
 }
 
+bool bpf_sys_map_is_per_cpu(enum bpf_map_type type)
+{
+    switch (type) {
+    case BPF_MAP_TYPE_PERCPU_ARRAY:
+    case BPF_MAP_TYPE_PERCPU_HASH:
+    case BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE:
+    case BPF_MAP_TYPE_LRU_PERCPU_HASH:
+        return true;
+    default:
+        return false;
+    }
+}
+
 ERL_NIF_TERM bpf_sys_attach_type_to_atom(ErlNifEnv* env, enum bpf_attach_type type)
 {
     return attach_types[type].atom;

@@ -61,4 +61,14 @@ static inline ERL_NIF_TERM bpf_sys_make_error(ErlNifEnv* env, ERL_NIF_TERM term)
     return enif_make_tuple2(env, ATOM_ERROR, term);
 }
 
+static inline size_t bpf_sys_align_backward(size_t size, size_t alignment)
+{
+    return size - (size % alignment);
+}
+
+static inline size_t bpf_sys_align_forward(size_t size, size_t alignment)
+{
+    return bpf_sys_align_backward(size + (alignment - 1), alignment);
+}
+
 #endif

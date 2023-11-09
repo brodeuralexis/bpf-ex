@@ -78,7 +78,10 @@ ERL_NIF_TERM ATOM_NIL;
 static int bpf_sys_load(ErlNifEnv* env, void** priv, ERL_NIF_TERM info_term)
 {
     libbpf_set_strict_mode(LIBBPF_STRICT_ALL);
+
+#ifdef BPF_SYS_LIBBPF_NO_PRINT
     libbpf_set_print(NULL);
+#endif
 
     ATOM_OK = enif_make_atom(env, "ok");
     ATOM_ERROR = enif_make_atom(env, "error");
