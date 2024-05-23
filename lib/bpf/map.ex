@@ -11,6 +11,51 @@ defmodule BPF.Map do
           ref: reference()
         }
 
+  @typedoc """
+  The type of the `Map`.
+
+  This is the union of all possible atoms that are currently supported by the
+  library, as new map types need to be explicitly added for support.
+  """
+  @type type ::
+          :unspec
+          | :hash
+          | :array
+          | :prog_array
+          | :perf_event_array
+          | :percpu_hash
+          | :percpu_array
+          | :stack_trace
+          | :cgroup_array
+          | :lru_hash
+          | :lru_percpu_hash
+          | :lpm_trie
+          | :array_of_maps
+          | :hash_of_maps
+          | :devmap
+          | :sockmap
+          | :cpumap
+          | :xskmap
+          | :sockhash
+          | :cgroup_storage_deprecated
+          | :reuseport_sockarray
+          | :percpu_cgroup_storage
+          | :queue
+          | :stack
+          | :sk_storage
+          | :devmap_hash
+          | :struct_ops
+          | :ringbuf
+          | :inode_storage
+          | :task_storage
+          | :bloom_filter
+          | :user_ringbuf
+          | :cgrp_storage
+
+  @doc """
+  Returns the type of the map.
+  """
+  @spec type(t) :: type
   def type(%__MODULE__{} = map) do
     :bpf_sys.map_type(map.ref)
   end
