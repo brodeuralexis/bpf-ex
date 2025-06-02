@@ -14,9 +14,19 @@ typedef struct bpf_sys_link {
 
 int bpf_sys_link_load(ErlNifEnv* env, void** priv, ERL_NIF_TERM info_term);
 
-#define BPF_SYS_LINK_FUNCS \
-    { "link_open", 1, link_open_nif, 0 },
+#define BPF_SYS_LINK_FUNCS                                \
+    { "link_open", 1, link_open_nif, 0 },                 \
+        { "link_disconnect", 1, link_disconnect_nif, 0 }, \
+        { "link_detach", 1, link_detach_nif, 0 },         \
+        { "link_pin_path", 1, link_pin_path_nif, 0 },     \
+        { "link_pin", 2, link_pin_nif, 0 },               \
+        { "link_unpin", 1, link_unpin_nif, 0 },
 
 NIF(link_open_nif);
+NIF(link_disconnect_nif);
+NIF(link_detach_nif);
+NIF(link_pin_path_nif);
+NIF(link_pin_nif);
+NIF(link_unpin_nif);
 
 #endif

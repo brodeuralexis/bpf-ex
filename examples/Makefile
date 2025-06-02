@@ -1,6 +1,6 @@
 CC := clang -target bpf -I. -Wall -O2 -g -c
 
-examples := syscall_counter
+examples := syscall_counter xdp_pass
 
 $(info $(examples:%=%.o))
 

@@ -43,4 +43,23 @@ defmodule BPF.Error do
 
     %__MODULE__{message: message, errno: errno}
   end
+
+  def exception(op: :program_attach, errno: errno) do
+    message = "failed to attach BPF program, libbpf return an #{errno} error code"
+
+    %__MODULE__{message: message, errno: errno}
+  end
+
+  def exception(op: :link_pin, path: path, errno: errno) do
+    message =
+      "failed to pin BPF link using path #{inspect(path)}, libbpf returned an #{errno} error code"
+
+    %__MODULE__{message: message, errno: errno}
+  end
+
+  def exception(op: :link_unpin, errnor: errno) do
+    message = "failed to unpin BPF link, libbpf returned an #{errno} error code"
+
+    %__MODULE__{message: message, errno: errno}
+  end
 end

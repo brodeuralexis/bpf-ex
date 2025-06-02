@@ -1,6 +1,6 @@
 <!-- livebook:{"persist_outputs":true} -->
 
-# Basic
+# Example 2
 
 ```elixir
 Mix.install([
@@ -25,22 +25,16 @@ Writting BPF programs is out-of-scope for this document.  One may however refer 
 A compiled BPF program is distributed in object for, which consists of an ELF file with sections for the programs, the maps, relocation, debug information, etc.  Using `BPF.Object.open_file/1`, we can open this file and see what is inside of it:
 
 ```elixir
-object = BPF.Object.open_file!("syscall_counter.o")
+object = BPF.Object.open_file!("xdp_pass.o")
 ```
 
 <!-- livebook:{"output":true} -->
 
 ```
 #BPF.Object<
-  name: "syscall_counter",
-  maps: %{"syscall_counts" => #BPF.Map<name: "syscall_counts", ...>},
-  programs: %{
-    "do_sys_exit" => #BPF.Program<
-      name: "do_sys_exit",
-      section_name: "tracepoint/raw_syscalls/sys_exit",
-      ...
-    >
-  },
+  name: "xdp_pass",
+  maps: %{},
+  programs: %{"xdp_pass" => #BPF.Program<name: "xdp_pass", section_name: "xdp", ...>},
   ...
 >
 ```
@@ -68,48 +62,16 @@ An attach point can be thought of as an event generator, and the program itself 
 Here, we attach the `do_sys_exit` program which will count the number of successful and unsuccessful system calls for every system calls on the host system:
 
 ```elixir
-link = BPF.Program.attach!(object.programs["do_sys_exit"])
+{:ok, link} = BPF.Program.attach_xdp(object.programs["xdp_pass"], 2)
 ```
 
 <!-- livebook:{"output":true} -->
 
 ```
-#BPF.Link<...>
+{:ok, #BPF.Link<...>}
 ```
 
 When attaching a program, a `BPF.Link` is returning.  A `BPF.Link` represents the link between an attach point and a program. Some types of links even allow atomic replacement of programs.
-
-## Maps
-
-In BPF, a map acts like a dictionary of key mapping to values.  While it is possible to create maps that are not part of objects, `BPF` does not support such a feature.
-
-There are 3 basic operations to maps consisting of `lookup_elem`, `update_elem`, `delete_elem`. `BPF` supports all 3 operations, but here, we will only look at `lookup`:
-
-```elixir
-[
-  read: BPF.Map.lookup_elem!(object.maps["syscall_counts"], 0),
-  write: BPF.Map.lookup_elem!(object.maps["syscall_counts"], 1),
-  openat: BPF.Map.lookup_elem!(object.maps["syscall_counts"], 257),
-  close: BPF.Map.lookup_elem!(object.maps["syscall_counts"], 3)
-]
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-[
-  read: %{"failure_counts" => 570, "success_counts" => 8157},
-  write: %{"failure_counts" => 0, "success_counts" => 6083},
-  openat: %{"failure_counts" => 52, "success_counts" => 1568},
-  close: %{"failure_counts" => 103, "success_counts" => 1704}
-]
-```
-
-Normally, when dealing with BPF maps, keys and values must be provided as binary data following the C ABI.
-
-In line with `BPF`'s goal of ensuring ease of use, all BPF objects that provide BTF (BPF Type Format) information will see their maps' keys and values automatically encoded and decoded depending on the context.
-
-In the above example, we can see that the keys, like `257`, are automatically encoded as to their binary form, which would be `<<257::little-unsigned-integer-size(64)-unit(1)>>`.  The values, which are actually C structs, are correctly parsed with fields corresponding to map members with the write name.
 
 ## Cleaning
 
@@ -120,25 +82,5 @@ BPF.Link.detach(link)
 <!-- livebook:{"output":true} -->
 
 ```
-{:error, :eafnosupport}
-```
-
-```elixir
-[
-  read: BPF.Map.lookup_elem!(object.maps["syscall_counts"], 0),
-  write: BPF.Map.lookup_elem!(object.maps["syscall_counts"], 1),
-  openat: BPF.Map.lookup_elem!(object.maps["syscall_counts"], 257),
-  close: BPF.Map.lookup_elem!(object.maps["syscall_counts"], 3)
-]
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-[
-  read: %{"failure_counts" => 1265, "success_counts" => 26374},
-  write: %{"failure_counts" => 0, "success_counts" => 17690},
-  openat: %{"failure_counts" => 382, "success_counts" => 5601},
-  close: %{"failure_counts" => 382, "success_counts" => 6090}
-]
+:ok
 ```

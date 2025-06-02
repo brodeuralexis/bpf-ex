@@ -255,5 +255,5 @@ NIF(program_attach_xdp_nif)
     link->handle = link_handle;
     ERL_NIF_TERM link_term = enif_make_resource(env, link);
     enif_release_resource(link);
-    return link_term;
+    return bpf_sys_make_ok(env, link_term);
 }

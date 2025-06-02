@@ -1,4 +1,7 @@
 #include "bpf_sys_link.h"
+#include "bpf_sys_error.h"
+#include "erl_nif.h"
+#include <bpf/libbpf.h>
 
 ErlNifResourceType* BPF_SYS_LINK_TYPE;
 
@@ -26,7 +29,7 @@ NIF(link_open_nif)
 
     struct bpf_link* handle = bpf_link__open(path);
     if (!handle) {
-        result = enif_make_badarg(env);
+        result = errno_to_result(env);
         goto cleanup_path;
     }
 
@@ -38,4 +41,86 @@ NIF(link_open_nif)
 cleanup_path:
     enif_free((void*)path);
     return result;
+}
+
+NIF(link_disconnect_nif)
+{
+    bpf_sys_link_t* link;
+    if (!enif_get_resource(env, argv[0], BPF_SYS_LINK_TYPE, (void**)&link)) {
+        return enif_make_badarg(env);
+    }
+
+    bpf_link__disconnect(link->handle);
+
+    return ATOM_OK;
+}
+
+NIF(link_detach_nif)
+{
+    bpf_sys_link_t* link;
+    if (!enif_get_resource(env, argv[0], BPF_SYS_LINK_TYPE, (void**)&link)) {
+        return enif_make_badarg(env);
+    }
+
+    if (bpf_link__detach(link->handle) < 0) {
+        return errno_to_result(env);
+    }
+
+    return ATOM_OK;
+}
+
+NIF(link_pin_path_nif)
+{
+    bpf_sys_link_t* link;
+    if (!enif_get_resource(env, argv[0], BPF_SYS_LINK_TYPE, (void**)&link)) {
+        return enif_make_badarg(env);
+    }
+
+    const char* pin_path = bpf_link__pin_path(link->handle);
+
+    if (pin_path == NULL) {
+        return ATOM_NIL;
+    }
+
+    return bpf_sys_make_string(env, pin_path);
+}
+
+NIF(link_pin_nif)
+{
+    ERL_NIF_TERM result;
+
+    bpf_sys_link_t* link;
+    if (!enif_get_resource(env, argv[0], BPF_SYS_LINK_TYPE, (void**)&link)) {
+        return enif_make_badarg(env);
+    }
+
+    const char* path;
+    if (!bpf_sys_get_string(env, argv[0], &path)) {
+        return enif_make_badarg(env);
+    }
+
+    if (bpf_link__pin(link->handle, path) < 0) {
+        result = errno_to_result(env);
+        goto cleanup_path;
+    }
+
+    result = ATOM_OK;
+
+cleanup_path:
+    enif_free((void*)path);
+    return result;
+}
+
+NIF(link_unpin_nif)
+{
+    bpf_sys_link_t* link;
+    if (!enif_get_resource(env, argv[0], BPF_SYS_LINK_TYPE, (void**)&link)) {
+        return enif_make_badarg(env);
+    }
+
+    if (bpf_link__unpin(link->handle) < 0) {
+        return errno_to_result(env);
+    }
+
+    return ATOM_OK;
 }

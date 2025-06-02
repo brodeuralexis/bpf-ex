@@ -46,13 +46,25 @@ defmodule :bpf_sys do
   def program_unpin(_, _), do: nif_error()
   def program_unload(_), do: nif_error()
   def program_attach(_), do: nif_error()
+  @spec program_attach_xdp(reference(), pos_integer()) :: {:ok, reference()} | {:error, atom}
   def program_attach_xdp(_, _), do: nif_error()
 
   def btf_find_by_name(_, _), do: nif_error()
   def btf_find_by_id(_, _), do: nif_error()
   def btf_endianness(_), do: nif_error()
 
+  @spec link_open(String.t()) :: {:ok, reference()} | {:error, atom}
   def link_open(_), do: nif_error()
+  @spec link_disconnect(reference()) :: :ok
+  def link_disconnect(_), do: nif_error()
+  @spec link_detach(reference()) :: :ok
+  def link_detach(_), do: nif_error()
+  @spec link_pin_path(reference()) :: String.t() | nil
+  def link_pin_path(_), do: nif_error()
+  @spec link_pin(reference(), String.t()) :: :ok | {:error, atom}
+  def link_pin(_, _), do: nif_error()
+  @spec link_unpin(reference()) :: :ok | {:error, atom}
+  def link_unpin(_), do: nif_error()
 
   defp nif_error do
     :erlang.nif_error(:bpf_sys)

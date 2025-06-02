@@ -28,7 +28,8 @@ int bpf_sys_program_load(ErlNifEnv* env, void** priv, ERL_NIF_TERM info_term);
         { "program_pin", 2, program_pin_nif, 0 },                       \
         { "program_unpin", 2, program_unpin_nif, 0 },                   \
         { "program_unload", 1, program_unload_nif, 0 },                 \
-        { "program_attach", 1, program_attach_nif, 0 },
+        { "program_attach", 1, program_attach_nif, 0 },                 \
+        { "program_attach_xdp", 2, program_attach_xdp_nif, 0 },
 
 NIF(program_set_ifindex_nif);
 NIF(program_name_nif);
@@ -43,5 +44,6 @@ NIF(program_pin_nif);
 NIF(program_unpin_nif);
 NIF(program_unload_nif);
 NIF(program_attach_nif);
+NIF(program_attach_xdp_nif);
 
 #endif

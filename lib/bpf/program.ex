@@ -33,6 +33,17 @@ defmodule BPF.Program do
     end
   end
 
+  @spec attach_xdp(t(), pos_integer()) :: {:ok, BPF.Link.t()} | {:error, any}
+  def attach_xdp(%__MODULE__{} = program, ifindex) when is_integer(ifindex) do
+    case :bpf_sys.program_attach_xdp(program.ref, ifindex) do
+      {:ok, ref} ->
+        {:ok, %BPF.Link{ref: ref}}
+
+      {:error, errno} ->
+        {:error, BPF.Error.exception(op: :program_attach_xdp, errno: errno)}
+    end
+  end
+
   @spec autoload?(t) :: boolean
   def autoload?(%__MODULE__{} = program) do
     :bpf_sys.program_autoload(program.ref)
